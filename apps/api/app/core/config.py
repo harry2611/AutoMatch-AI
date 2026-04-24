@@ -21,15 +21,18 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 120
     seed_demo_data: bool = True
     scheduler_enabled: bool = True
-    api_cors_origins: list[str] = ["http://localhost:3000"]
+    api_cors_origins: str = "http://localhost:3000"
 
     @field_validator("api_cors_origins", mode="before")
     @classmethod
-    def parse_cors_origins(cls, value: str | list[str]) -> list[str]:
+    def parse_cors_origins(cls, value: str | list[str]) -> str:
         if isinstance(value, list):
-            return value
-        return [origin.strip() for origin in value.split(",") if origin.strip()]
+            return ",".join(value)
+        return value
+
+    @property
+    def cors_origins(self) -> list[str]:
+        return [origin.strip() for origin in self.api_cors_origins.split(",") if origin.strip()]
 
 
 settings = Settings()
-

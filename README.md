@@ -15,6 +15,64 @@ It combines a buyer-facing recommendation experience, a dealer intelligence dash
 - Background jobs to recompute priors, dealer quality, and cached analytics snapshots.
 - Seed data, demo credentials, Dockerized local setup, and FastAPI docs.
 
+## Product walkthrough
+
+The screenshots below are arranged in the same order a reviewer would experience the platform: product overview first, then the buyer workflow, then dealer operations, and finally the admin experimentation surface.
+
+### 1. Overview landing hero
+
+This screen is the top-level product introduction. It explains the marketplace problem AutoMatch AI solves, shows the live optimization loop, and gives direct entry points into the buyer app, dealer dashboard, and experiment lab.
+
+![Overview landing hero](docs/screenshots/01-overview-hero.png)
+
+### 2. Overview capabilities and implementation stack
+
+This section of the overview page summarizes the core platform capabilities: Bayesian match scoring, revenue-aware ranking, and the closed marketplace feedback loop. It also surfaces the major operational modules and the technology stack used to build the system.
+
+![Overview capabilities and stack](docs/screenshots/02-overview-capabilities.png)
+
+### 3. Buyer profile setup and realtime telemetry
+
+This buyer-facing screen is where a shopper enters budget, ZIP code, preferred brand, body type, financing preference, and urgency. On the right, the app shows live telemetry for the active experiment arm, top match value, purchase probability, projected revenue, and the current posterior status.
+
+![Buyer profile and telemetry](docs/screenshots/03-buyer-profile-and-telemetry.png)
+
+### 4. Buyer ranked recommendations and action controls
+
+This is the ranked recommendation experience returned by the Bayesian matching engine. Each card explains why a vehicle was selected, shows the probability and revenue signals behind the ranking, and provides interaction buttons such as click, save, test-drive request, and reject to trigger real-time posterior updates.
+
+![Buyer ranked recommendations](docs/screenshots/04-buyer-ranked-recommendations.png)
+
+### 5. Dealer dashboard login and KPI summary
+
+This dealer view begins with seeded authentication and a top-level operational summary. It shows the dealer's quality score, response rate, average response time, and the number of high-intent leads currently being surfaced from the same event stream that powers buyer ranking.
+
+![Dealer login and KPI summary](docs/screenshots/05-dealer-login-and-kpis.png)
+
+### 6. Dealer high-intent leads and vehicle demand
+
+This dealer intelligence screen highlights the buyers most likely to convert and pairs that with stacked demand signals for vehicles. It helps a dealer understand which inventory is pulling clicks, saves, and test-drive interest right now.
+
+![Dealer leads and demand](docs/screenshots/06-dealer-leads-and-demand.png)
+
+### 7. Dealer trends, pricing gaps, and response impact
+
+This screen goes deeper into dealership performance. It visualizes close-rate trends over time, shows pricing gaps relative to the market, and breaks down how response latency affects conversion outcomes across different response-time buckets.
+
+![Dealer trends and pricing analysis](docs/screenshots/07-dealer-trends-and-pricing.png)
+
+### 8. Admin experiment overview
+
+This is the admin entry point for experimentation. It shows the seeded admin login flow and then summarizes the active ranking experiment with KPI lift, average match distance, and experiment count so the user can quickly judge whether Bayesian ranking is outperforming the heuristic baseline.
+
+![Admin experiment overview](docs/screenshots/08-admin-overview.png)
+
+### 9. Admin headline metrics and arm comparison
+
+This final screen shows the experiment analytics in detail. It includes headline marketplace KPIs, a daily trend chart, and a side-by-side comparison of the heuristic and Bayesian arms across CTR, precision@5, conversion rate, dealer response rate, revenue, and average distance.
+
+![Admin metrics and arm comparison](docs/screenshots/09-admin-metrics-and-arms.png)
+
 ## Monorepo layout
 
 ```text
@@ -111,4 +169,3 @@ Suggested bullets based on this project:
 - Implemented a revenue-aware recommendation pipeline using FastAPI, PostgreSQL, Redis, APScheduler, NumPy, pandas, scikit-learn, Next.js, and Docker.
 
 More detail is in [docs/architecture.md](/Users/harsh/AutoMatch-AI/docs/architecture.md) and [docs/resume-metrics.md](/Users/harsh/AutoMatch-AI/docs/resume-metrics.md).
-
