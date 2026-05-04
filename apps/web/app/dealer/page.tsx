@@ -104,8 +104,8 @@ export default function DealerPage() {
         <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <SectionCard title="High-intent leads" subtitle="Likely-to-convert buyers currently clustering around your inventory.">
             <div className="space-y-3">
-              {dashboard.high_intent_leads.map((lead) => (
-                <div key={`${lead.buyer_id}-${lead.vehicle_label}`} className="rounded-2xl border border-slate-100 bg-white px-4 py-4">
+              {dashboard.high_intent_leads.map((lead, index) => (
+                <div key={`${lead.buyer_id}-${lead.vehicle_label}-${index}`} className="rounded-2xl border border-slate-100 bg-white px-4 py-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="text-lg font-semibold text-ink">{lead.buyer_name}</p>

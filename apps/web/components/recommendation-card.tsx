@@ -1,23 +1,41 @@
-import { BadgeDollarSign, CarFront, Clock3, Heart, MapPin, MousePointerClick, ThumbsDown } from "lucide-react";
+import { BadgeDollarSign, CarFront, Clock3, Heart, Loader2, MapPin, MousePointerClick, ThumbsDown } from "lucide-react";
 
 import { formatCurrency, formatPercent } from "@/lib/api";
-import type { EventType, RecommendationItem } from "@/lib/types";
+import type { BodyType, EventType, RecommendationItem } from "@/lib/types";
 
 interface RecommendationCardProps {
   item: RecommendationItem;
   activeAction?: string | null;
+  preferredBodyType?: BodyType | string;
+  preferredBrand?: string;
   onTrack: (eventType: EventType, item: RecommendationItem) => void;
 }
 
-export function RecommendationCard({ item, activeAction, onTrack }: RecommendationCardProps) {
+export function RecommendationCard({ item, activeAction, preferredBodyType, preferredBrand, onTrack }: RecommendationCardProps) {
   const actionKey = (eventType: EventType) => `${item.recommendation_id ?? item.vehicle_id}:${eventType}`;
+  const isAnyActionPending = activeAction !== null && activeAction !== undefined;
+
+  const bodyMismatch = preferredBodyType && item.body_type !== preferredBodyType;
+  const brandMismatch = preferredBrand && item.brand.toLowerCase() !== preferredBrand.toLowerCase();
 
   return (
     <article className="panel overflow-hidden">
       <div className="border-b border-slate-100 bg-gradient-to-r from-brand-50 via-white to-orange-50 px-6 py-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="kicker">Rank #{item.rank}</div>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="kicker">Rank #{item.rank}</div>
+              {bodyMismatch && (
+                <span className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-orange-700">
+                  {item.body_type} · not your preferred type
+                </span>
+              )}
+              {brandMismatch && !bodyMismatch && (
+                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                  {item.brand} · not your preferred brand
+                </span>
+              )}
+            </div>
             <h3 className="mt-3 text-2xl font-semibold text-ink">
               {item.year} {item.brand} {item.model}
             </h3>
@@ -85,42 +103,39 @@ export function RecommendationCard({ item, activeAction, onTrack }: Recommendati
           </div>
 
           <div className="mt-5 grid gap-3">
-            <button
-              type="button"
-              className="button-primary gap-2"
-              disabled={activeAction === actionKey("click")}
+            <ActionButton
+              label="Track Click"
+              pendingLabel="Updating..."
+              icon={<MousePointerClick className="h-4 w-4" />}
+              isPrimary
+              isActive={activeAction === actionKey("click")}
+              isDisabled={isAnyActionPending}
               onClick={() => onTrack("click", item)}
-            >
-              <MousePointerClick className="h-4 w-4" />
-              {activeAction === actionKey("click") ? "Updating..." : "Track Click"}
-            </button>
-            <button
-              type="button"
-              className="button-secondary gap-2"
-              disabled={activeAction === actionKey("save")}
+            />
+            <ActionButton
+              label="Save Match"
+              pendingLabel="Saving..."
+              icon={<Heart className="h-4 w-4" />}
+              isActive={activeAction === actionKey("save")}
+              isDisabled={isAnyActionPending}
               onClick={() => onTrack("save", item)}
-            >
-              <Heart className="h-4 w-4" />
-              Save Match
-            </button>
-            <button
-              type="button"
-              className="button-secondary gap-2"
-              disabled={activeAction === actionKey("test_drive_request")}
+            />
+            <ActionButton
+              label="Request Test Drive"
+              pendingLabel="Requesting..."
+              icon={<CarFront className="h-4 w-4" />}
+              isActive={activeAction === actionKey("test_drive_request")}
+              isDisabled={isAnyActionPending}
               onClick={() => onTrack("test_drive_request", item)}
-            >
-              <CarFront className="h-4 w-4" />
-              Request Test Drive
-            </button>
-            <button
-              type="button"
-              className="button-secondary gap-2"
-              disabled={activeAction === actionKey("reject")}
+            />
+            <ActionButton
+              label="Reject"
+              pendingLabel="Rejecting..."
+              icon={<ThumbsDown className="h-4 w-4" />}
+              isActive={activeAction === actionKey("reject")}
+              isDisabled={isAnyActionPending}
               onClick={() => onTrack("reject", item)}
-            >
-              <ThumbsDown className="h-4 w-4" />
-              Reject
-            </button>
+            />
           </div>
         </div>
       </div>
@@ -128,3 +143,34 @@ export function RecommendationCard({ item, activeAction, onTrack }: Recommendati
   );
 }
 
+// Small helper so each button shows a spinner when it's the active one,
+// and is greyed-out (but not hidden) when another action is pending.
+function ActionButton({
+  label,
+  pendingLabel,
+  icon,
+  isPrimary,
+  isActive,
+  isDisabled,
+  onClick,
+}: {
+  label: string;
+  pendingLabel: string;
+  icon: React.ReactNode;
+  isPrimary?: boolean;
+  isActive: boolean;
+  isDisabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={`${isPrimary ? "button-primary" : "button-secondary"} gap-2 transition-opacity ${isDisabled && !isActive ? "opacity-50" : ""}`}
+      disabled={isDisabled}
+      onClick={onClick}
+    >
+      {isActive ? <Loader2 className="h-4 w-4 animate-spin" /> : icon}
+      {isActive ? pendingLabel : label}
+    </button>
+  );
+}

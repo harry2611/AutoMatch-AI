@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { LineChart, Sparkles } from "lucide-react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { CheckCircle, LineChart, Sparkles, XCircle } from "lucide-react";
 
 import { MetricCard } from "@/components/metric-card";
 import { RecommendationCard } from "@/components/recommendation-card";
@@ -21,20 +21,40 @@ const initialForm = {
   top_k: 5,
 };
 
+// Inline toast shown next to action buttons so the user gets feedback
+// without having to scroll back up.
+interface Toast {
+  id: number;
+  type: "success" | "error";
+  message: string;
+}
+
 export default function BuyerPage() {
   const [form, setForm] = useState(initialForm);
   const [result, setResult] = useState<RecommendationResponse | null>(null);
   const [message, setMessage] = useState<string>("Live posterior updates will show here after each interaction.");
   const [error, setError] = useState<string | null>(null);
   const [activeAction, setActiveAction] = useState<string | null>(null);
+  const [toasts, setToasts] = useState<Toast[]>([]);
   const [isPending, startTransition] = useTransition();
+  const toastCounter = useRef(0);
 
+  const addToast = (type: Toast["type"], message: string) => {
+    const id = ++toastCounter.current;
+    setToasts((prev) => [...prev, { id, type, message }]);
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000);
+  };
+
+  // Re-uses the same buyer across form resubmissions so posterior history is preserved.
   const loadRecommendations = (payload?: Partial<typeof initialForm> & { buyer_id?: number }) => {
     startTransition(async () => {
       try {
         setError(null);
         const next = await fetchRecommendations({
           ...form,
+          // Pass the existing buyer_id when re-generating so the engine updates
+          // the same buyer's preferences rather than creating a new anonymous one.
+          ...(result && !payload?.buyer_id ? { buyer_id: result.buyer_id } : {}),
           ...payload,
         });
         setResult(next);
@@ -42,7 +62,8 @@ export default function BuyerPage() {
           `Serving ${next.ranking_strategy} recommendations from ${next.experiment_name ?? "the active experiment"} with version ${next.recommendation_version}.`,
         );
       } catch (fetchError) {
-        setError(fetchError instanceof Error ? fetchError.message : "Unable to load recommendations.");
+        const msg = fetchError instanceof Error ? fetchError.message : "Unable to load recommendations.";
+        setError(msg);
       }
     });
   };
@@ -53,9 +74,7 @@ export default function BuyerPage() {
   }, []);
 
   const handleTrack = async (eventType: EventType, item: RecommendationItem) => {
-    if (!result) {
-      return;
-    }
+    if (!result) return;
 
     const actionKey = `${item.recommendation_id ?? item.vehicle_id}:${eventType}`;
     setActiveAction(actionKey);
@@ -76,11 +95,14 @@ export default function BuyerPage() {
       if (eventResponse.reranked_recommendations) {
         setResult(eventResponse.reranked_recommendations);
       }
-      setMessage(
-        `${eventResponse.message} Dealer posterior: ${formatPercent(eventResponse.posterior_snapshot.dealer ?? 0)}. Market posterior: ${formatPercent(eventResponse.posterior_snapshot.market ?? 0)}.`,
-      );
+
+      const posteriorMsg = `Dealer posterior: ${formatPercent(eventResponse.posterior_snapshot.dealer ?? 0)}. Market posterior: ${formatPercent(eventResponse.posterior_snapshot.market ?? 0)}.`;
+      setMessage(`${eventResponse.message} ${posteriorMsg}`);
+      addToast("success", `${eventType.replace(/_/g, " ")} recorded — rankings updated.`);
     } catch (trackError) {
-      setError(trackError instanceof Error ? trackError.message : "Unable to track the event.");
+      const msg = trackError instanceof Error ? trackError.message : "Unable to track the event.";
+      setError(msg);
+      addToast("error", msg);
     } finally {
       setActiveAction(null);
     }
@@ -88,6 +110,27 @@ export default function BuyerPage() {
 
   return (
     <main className="mx-auto flex max-w-7xl flex-col gap-8 px-6 py-10 lg:px-10">
+      {/* Fixed toast stack — bottom-right, always visible */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            className={`flex items-center gap-3 rounded-2xl px-5 py-3 text-sm font-medium shadow-lg transition-all ${
+              toast.type === "success"
+                ? "bg-brand-900 text-white"
+                : "bg-red-700 text-white"
+            }`}
+          >
+            {toast.type === "success" ? (
+              <CheckCircle className="h-4 w-4 shrink-0" />
+            ) : (
+              <XCircle className="h-4 w-4 shrink-0" />
+            )}
+            {toast.message}
+          </div>
+        ))}
+      </div>
+
       <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
         <SectionCard
           title="Buyer-side matching"
@@ -189,6 +232,20 @@ export default function BuyerPage() {
               <Sparkles className="h-4 w-4" />
               {isPending ? "Generating..." : "Generate ranked matches"}
             </button>
+            {result && (
+              <button
+                type="button"
+                className="button-secondary gap-2 text-sm"
+                disabled={isPending}
+                onClick={() => {
+                  setResult(null);
+                  setMessage("Live posterior updates will show here after each interaction.");
+                  setForm(initialForm);
+                }}
+              >
+                Reset
+              </button>
+            )}
             <div className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-600">
               Demo flow: click, save, reject, or request a test drive to trigger posterior updates.
             </div>
@@ -236,7 +293,14 @@ export default function BuyerPage() {
       <section className="space-y-6">
         {result?.recommendations?.length ? (
           result.recommendations.map((item) => (
-            <RecommendationCard key={item.recommendation_id ?? item.vehicle_id} item={item} activeAction={activeAction} onTrack={handleTrack} />
+            <RecommendationCard
+              key={item.recommendation_id ?? item.vehicle_id}
+              item={item}
+              activeAction={activeAction}
+              preferredBodyType={form.preferred_body_type}
+              preferredBrand={form.preferred_brand}
+              onTrack={handleTrack}
+            />
           ))
         ) : (
           <div className="panel px-6 py-12 text-center text-slate-600">
@@ -247,4 +311,3 @@ export default function BuyerPage() {
     </main>
   );
 }
-
