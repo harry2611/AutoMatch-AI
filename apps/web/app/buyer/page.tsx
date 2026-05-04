@@ -31,6 +31,10 @@ interface Toast {
 
 export default function BuyerPage() {
   const [form, setForm] = useState(initialForm);
+  // Separate string states so the budget fields feel natural while typing.
+  // The numeric form values are only updated when the user finishes editing (onBlur).
+  const [budgetMinStr, setBudgetMinStr] = useState(String(initialForm.budget_min));
+  const [budgetMaxStr, setBudgetMaxStr] = useState(String(initialForm.budget_max));
   const [result, setResult] = useState<RecommendationResponse | null>(null);
   const [message, setMessage] = useState<string>("Live posterior updates will show here after each interaction.");
   const [error, setError] = useState<string | null>(null);
@@ -159,20 +163,36 @@ export default function BuyerPage() {
               <label className="label" htmlFor="budget-min">Budget min</label>
               <input
                 id="budget-min"
-                type="number"
+                type="text"
+                inputMode="numeric"
                 className="field"
-                value={form.budget_min}
-                onChange={(event) => setForm((current) => ({ ...current, budget_min: Number(event.target.value) }))}
+                value={budgetMinStr}
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => setBudgetMinStr(e.target.value)}
+                onBlur={() => {
+                  const parsed = parseInt(budgetMinStr.replace(/\D/g, ""), 10);
+                  const value = isNaN(parsed) ? 0 : parsed;
+                  setBudgetMinStr(String(value));
+                  setForm((current) => ({ ...current, budget_min: value }));
+                }}
               />
             </div>
             <div>
               <label className="label" htmlFor="budget-max">Budget max</label>
               <input
                 id="budget-max"
-                type="number"
+                type="text"
+                inputMode="numeric"
                 className="field"
-                value={form.budget_max}
-                onChange={(event) => setForm((current) => ({ ...current, budget_max: Number(event.target.value) }))}
+                value={budgetMaxStr}
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => setBudgetMaxStr(e.target.value)}
+                onBlur={() => {
+                  const parsed = parseInt(budgetMaxStr.replace(/\D/g, ""), 10);
+                  const value = isNaN(parsed) ? 0 : parsed;
+                  setBudgetMaxStr(String(value));
+                  setForm((current) => ({ ...current, budget_max: value }));
+                }}
               />
             </div>
             <div>
@@ -241,6 +261,8 @@ export default function BuyerPage() {
                   setResult(null);
                   setMessage("Live posterior updates will show here after each interaction.");
                   setForm(initialForm);
+                  setBudgetMinStr(String(initialForm.budget_min));
+                  setBudgetMaxStr(String(initialForm.budget_max));
                 }}
               >
                 Reset
