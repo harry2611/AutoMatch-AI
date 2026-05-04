@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -12,7 +14,7 @@ from app.schemas.domain import EventCreate, EventResponse, RecommendationRequest
 from app.services.bayesian import apply_event_feedback, posterior_snapshot
 from app.services.recommendation import generate_recommendations
 
-
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/events", tags=["events"])
 
 
@@ -37,6 +39,14 @@ def track_event(payload: EventCreate, db: Session = Depends(get_db)) -> EventRes
     db.add(event)
     db.commit()
     db.refresh(event)
+
+    logger.info(
+        "Event tracked: type=%s buyer=%d vehicle=%d dealer=%d",
+        payload.event_type.value,
+        buyer.id,
+        vehicle.id,
+        dealer.id,
+    )
 
     apply_event_feedback(db, buyer, vehicle, dealer, payload.event_type)
 
@@ -65,10 +75,19 @@ def track_event(payload: EventCreate, db: Session = Depends(get_db)) -> EventRes
             )
         )
         db.commit()
+        logger.info(
+            "Conversion recorded: buyer=%d vehicle=%d sale_price=%.2f",
+            buyer.id,
+            vehicle.id,
+            sale_price,
+        )
 
     redis_client = get_redis_client()
     if redis_client is not None:
-        redis_client.hincrby("events:counts", payload.event_type.value, 1)
+        try:
+            redis_client.hincrby("events:counts", payload.event_type.value, 1)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Failed to increment event counter in Redis: %s", exc)
 
     reranked = None
     if payload.rerank:

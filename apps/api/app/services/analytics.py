@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.cache import cache_json
+from app.utils.math_utils import clamp
 from app.models.entities import Conversion, Dealer, Event, Experiment, Recommendation, Vehicle
 from app.models.enums import EventType, ExperimentArm
 from app.schemas.domain import (
@@ -372,6 +373,4 @@ def dealer_dashboard(db: Session, dealer_id: int) -> DealerDashboardResponse:
     )
 
 
-def clamp(value: float, minimum: float, maximum: float) -> float:
-    return max(minimum, min(value, maximum))
 

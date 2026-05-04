@@ -15,6 +15,7 @@ from app.schemas.domain import RecommendationItem, RecommendationRequest, Recomm
 from app.services.bayesian import get_prior_lookup, posterior_mean
 from app.services.experiments import assign_experiment_arm, get_active_experiment
 from app.utils.geo import haversine_miles, zip_to_coordinates
+from app.utils.math_utils import clamp
 
 
 POSITIVE_EVENTS = {EventType.CLICK, EventType.SAVE, EventType.TEST_DRIVE_REQUEST, EventType.CONVERSION}
@@ -39,9 +40,6 @@ class CandidateScore:
     inventory_score: float
     explanation: list[str]
 
-
-def clamp(value: float, minimum: float = 0.0, maximum: float = 1.0) -> float:
-    return max(minimum, min(value, maximum))
 
 
 def _price_as_float(vehicle: Vehicle) -> float:

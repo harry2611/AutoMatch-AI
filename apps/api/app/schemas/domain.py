@@ -3,7 +3,9 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+import re
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.models.enums import BodyType, EventType, ExperimentArm, ExperimentStatus, FinancingPreference, InventoryStatus, UrgencyLevel, UserRole, VehicleCondition
 
@@ -46,10 +48,34 @@ class RecommendationRequest(BaseModel):
     top_k: int = 5
     strategy_override: ExperimentArm | None = None
 
+    @field_validator("zip_code")
+    @classmethod
+    def validate_zip_code(cls, value: str | None) -> str | None:
+        if value is not None and not re.fullmatch(r"\d{5}", value.strip()):
+            raise ValueError("zip_code must be a 5-digit US ZIP code.")
+        return value.strip() if value else value
+
+    @field_validator("budget_min", "budget_max")
+    @classmethod
+    def validate_budget_positive(cls, value: float | None) -> float | None:
+        if value is not None and value < 0:
+            raise ValueError("Budget values must be non-negative.")
+        return value
+
     @field_validator("top_k")
     @classmethod
     def validate_top_k(cls, value: int) -> int:
         return min(max(value, 1), 10)
+
+    @model_validator(mode="after")
+    def validate_budget_range(self) -> "RecommendationRequest":
+        if (
+            self.budget_min is not None
+            and self.budget_max is not None
+            and self.budget_min >= self.budget_max
+        ):
+            raise ValueError("budget_min must be less than budget_max.")
+        return self
 
 
 class RecommendationItem(BaseModel):
