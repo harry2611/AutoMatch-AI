@@ -55,7 +55,7 @@ class Dealer(Base, TimestampMixin):
 
 
 class User(Base, TimestampMixin):
-    __tablename__ = "users"
+    __tablename__ = "am_users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
