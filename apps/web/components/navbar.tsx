@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Menu, X, ArrowRight } from "lucide-react";
 
-const navItems = [
+const navItems: { href: "/" | "/buyer" | "/dealer" | "/admin"; label: string }[] = [
   { href: "/", label: "Overview" },
   { href: "/buyer", label: "Buyer App" },
   { href: "/dealer", label: "Dealer IQ" },
