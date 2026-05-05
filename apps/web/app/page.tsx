@@ -97,7 +97,14 @@ const capabilities = [
   },
 ];
 
-const surfaces = [
+const surfaces: {
+  label: string;
+  href: "/buyer" | "/dealer" | "/admin";
+  tag: string;
+  description: string;
+  cta: string;
+  color: string;
+}[] = [
   {
     label: "Buyer App",
     href: "/buyer",
