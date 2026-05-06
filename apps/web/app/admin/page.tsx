@@ -40,7 +40,7 @@ export default function AdminPage() {
       <section className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
         <SectionCard
           title="Admin experimentation lab"
-          subtitle="Authenticate as the seeded admin to inspect the heuristic-vs-Bayesian experiment and outcome metrics."
+          subtitle="Authenticate as the seeded admin to inspect the heuristic-vs-Bayesian experiment and outcome metrics. Public signup is intentionally disabled for admin access."
         >
           <div className="rounded-[24px] border border-orange-100 bg-orange-50 p-5 text-sm text-orange-900">
             Demo credentials: <span className="font-semibold">admin@automatch.ai / demo1234</span>

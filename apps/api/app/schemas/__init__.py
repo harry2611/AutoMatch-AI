@@ -2,6 +2,7 @@ from app.schemas.domain import (
     AnalyticsOverviewResponse,
     DealerDashboardResponse,
     DealerListItem,
+    DealerSignupRequest,
     EventCreate,
     EventResponse,
     ExperimentCreate,
@@ -20,6 +21,7 @@ __all__ = [
     "AnalyticsOverviewResponse",
     "DealerDashboardResponse",
     "DealerListItem",
+    "DealerSignupRequest",
     "EventCreate",
     "EventResponse",
     "ExperimentCreate",
@@ -33,4 +35,3 @@ __all__ = [
     "UserSummary",
     "VehicleResponse",
 ]
-

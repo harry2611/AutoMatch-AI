@@ -27,6 +27,58 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class DealerSignupRequest(BaseModel):
+    full_name: str = Field(min_length=2, max_length=255)
+    email: str
+    password: str = Field(min_length=8, max_length=128)
+    dealer_id: int | None = None
+    dealership_name: str | None = None
+    zip_code: str | None = None
+    city: str | None = None
+    state: str | None = None
+
+    @field_validator("full_name", "email", "dealership_name", "city", "state")
+    @classmethod
+    def strip_string_fields(cls, value: str | None) -> str | None:
+        return value.strip() if value else value
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", normalized):
+            raise ValueError("Enter a valid email address.")
+        return normalized
+
+    @field_validator("zip_code")
+    @classmethod
+    def validate_signup_zip_code(cls, value: str | None) -> str | None:
+        if value is not None and not re.fullmatch(r"\d{5}", value.strip()):
+            raise ValueError("zip_code must be a 5-digit US ZIP code.")
+        return value.strip() if value else value
+
+    @model_validator(mode="after")
+    def validate_dealership_fields(self) -> "DealerSignupRequest":
+        if self.dealer_id is not None:
+            return self
+
+        missing_fields = [
+            label
+            for label, value in (
+                ("dealership_name", self.dealership_name),
+                ("zip_code", self.zip_code),
+                ("city", self.city),
+                ("state", self.state),
+            )
+            if not value
+        ]
+        if missing_fields:
+            raise ValueError(
+                f"{', '.join(missing_fields)} {'is' if len(missing_fields) == 1 else 'are'} required when creating a new dealership."
+            )
+        return self
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"

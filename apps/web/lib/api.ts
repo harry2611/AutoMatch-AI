@@ -1,4 +1,12 @@
-import type { AnalyticsOverviewResponse, DealerDashboardResponse, EventResponse, ExperimentDashboardResponse, LoginResponse, RecommendationResponse } from "@/lib/types";
+import type {
+  AnalyticsOverviewResponse,
+  DealerDashboardResponse,
+  DealerListItem,
+  EventResponse,
+  ExperimentDashboardResponse,
+  LoginResponse,
+  RecommendationResponse,
+} from "@/lib/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
 
@@ -34,6 +42,13 @@ export function login(email: string, password: string): Promise<LoginResponse> {
   });
 }
 
+export function signupDealer(payload: Record<string, unknown>): Promise<LoginResponse> {
+  return request<LoginResponse>("/auth/signup", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export function fetchRecommendations(payload: Record<string, unknown>): Promise<RecommendationResponse> {
   return request<RecommendationResponse>("/recommendations/query", {
     method: "POST",
@@ -50,6 +65,10 @@ export function trackEvent(payload: Record<string, unknown>): Promise<EventRespo
 
 export function fetchDealerDashboard(token: string): Promise<DealerDashboardResponse> {
   return request<DealerDashboardResponse>("/dealers/me/dashboard", { token });
+}
+
+export function fetchDealers(): Promise<DealerListItem[]> {
+  return request<DealerListItem[]>("/dealers");
 }
 
 export function fetchAnalytics(token: string): Promise<AnalyticsOverviewResponse> {
@@ -78,4 +97,3 @@ export function formatCompact(value: number): string {
     maximumFractionDigits: 1,
   }).format(value);
 }
-

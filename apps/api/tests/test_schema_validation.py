@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from app.schemas.domain import RecommendationRequest
+from app.schemas.domain import DealerSignupRequest, RecommendationRequest
 
 
 class TestRecommendationRequestValidation:
@@ -83,3 +83,57 @@ class TestRecommendationRequestValidation:
         req = RecommendationRequest(buyer_id=1, budget_min=20000)
         assert req.budget_min == 20000
         assert req.budget_max is None
+
+
+class TestDealerSignupRequestValidation:
+    def test_existing_dealer_signup_allows_missing_dealership_fields(self):
+        req = DealerSignupRequest(
+            full_name="Jordan Lee",
+            email="jordan@example.com",
+            password="securepass",
+            dealer_id=1,
+        )
+        assert req.dealer_id == 1
+        assert req.dealership_name is None
+
+    def test_new_dealer_signup_requires_profile_fields(self):
+        with pytest.raises(ValidationError, match="dealership_name"):
+            DealerSignupRequest(
+                full_name="Jordan Lee",
+                email="jordan@example.com",
+                password="securepass",
+            )
+
+    def test_invalid_signup_zip_raises(self):
+        with pytest.raises(ValidationError, match="5-digit"):
+            DealerSignupRequest(
+                full_name="Jordan Lee",
+                email="jordan@example.com",
+                password="securepass",
+                dealership_name="Jordan Auto",
+                zip_code="9410X",
+                city="San Francisco",
+                state="CA",
+            )
+
+    def test_short_password_raises(self):
+        with pytest.raises(ValidationError, match="at least 8"):
+            DealerSignupRequest(
+                full_name="Jordan Lee",
+                email="jordan@example.com",
+                password="short",
+                dealer_id=1,
+            )
+
+    def test_valid_new_dealer_signup_is_accepted(self):
+        req = DealerSignupRequest(
+            full_name="Jordan Lee",
+            email="Jordan@example.com",
+            password="securepass",
+            dealership_name="Jordan Auto",
+            zip_code="94103",
+            city="San Francisco",
+            state="CA",
+        )
+        assert req.email == "jordan@example.com"
+        assert req.zip_code == "94103"
